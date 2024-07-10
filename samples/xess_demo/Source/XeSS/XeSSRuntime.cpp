@@ -372,7 +372,7 @@ namespace XeSS
                 ExeArgs.ResetHistory ? DSR_SUPERRES_UPSCALER_EXECUTE_FLAG_RESET_HISTORY
                 : DSR_SUPERRES_UPSCALER_EXECUTE_FLAG_NONE;
             
-            float frameDeltaInSeconds = 0.016f;
+            float frameDeltaInSeconds = Graphics::GetFrameTime();
             
             HRESULT exe_hr = g_dsrUpscaler->Execute(&params, frameDeltaInSeconds, executeFlags);
 
