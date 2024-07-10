@@ -56,6 +56,8 @@ namespace Graphics
     bool g_bTypedUAVLoadSupport_R16G16B16A16_FLOAT = false;
 
     ID3D12Device* g_Device = nullptr;
+    IDSRDevice* g_dsrDevice = nullptr;
+    IDSRSuperResUpscaler* g_dsrUpscaler = nullptr;
     CommandListManager g_CommandManager;
     ContextManager g_ContextManager;
 

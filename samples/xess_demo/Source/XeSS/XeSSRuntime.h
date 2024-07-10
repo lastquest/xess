@@ -22,6 +22,13 @@
 
 #pragma once
 
+#ifdef USE_PREVIEW_AGILITY_SDK
+#include "microsoft.direct3d.d3d12.1.714.0-preview/build/native/include/d3d12.h"
+#include "microsoft.direct3d.d3d12.1.714.0-preview/build/native/include/directsr.h"
+#else
+#include <d3d12.h>
+#endif  
+
 #include "xess/xess.h"
 #include "xess/xess_d3d12.h"
 
@@ -206,6 +213,15 @@ namespace XeSS
         void ForceLegacyScaleFactors(bool force);
 
         void ProcessPerfData();
+
+        char* GetDirectSRVariantNames() { return m_DirectSRVariantNames; }
+        uint32_t GetDirectSRVariantCount() { return m_DirectSVariantCount;  }
+        uint32_t GetDirectSRVariantIndex() { return m_DirectSVariantIndex; }
+        void SetDirectSRVariantIndex(uint32_t new_value) 
+        { 
+            m_DirectSVariantIndex = new_value;
+        }
+
     private:
         /// Save initialization arguments.
         void SetInitArguments(const InitArguments& Args);
@@ -245,5 +261,12 @@ namespace XeSS
         std::string m_PerfGraphRecordName;
         /// Perf graph data.
         PerfGraphData m_PerfGraphData;
+
+
+        //DirectSR
+        char m_DirectSRVariantNames[4096];
+        GUID m_DirectSRVariantIDs[12];
+        uint32_t m_DirectSVariantCount = 0;
+        uint32_t m_DirectSVariantIndex = 0;
     };
 } // namespace XeSS

@@ -51,6 +51,16 @@
 #include "xess/xess_d3d12_debug.h"
 
 
+ // For Direct3D 12 Agility SDK
+extern "C"
+{
+#ifdef USE_PREVIEW_AGILITY_SDK
+    __declspec(dllexport) extern const UINT D3D12SDKVersion = D3D12_PREVIEW_SDK_VERSION;
+    __declspec(dllexport) extern const char* D3D12SDKPath = ".\\D3D12_preview\\";
+#endif
+
+}
+
 CREATE_APPLICATION(DemoApp)
 
 using namespace GameCore;
@@ -153,8 +163,8 @@ void DemoApp::Startup()
 
     XeSS::Initialize();
     XeSS::SetEnabled(true);
-    XeSS::SetQuality(XeSS::kQualityPerformance);
-    XeSS::SetMotionVectorsMode(XeSS::kMotionVectorsHighRes);
+    XeSS::SetQuality(XeSS::kQualityQuality);
+    XeSS::SetMotionVectorsMode(XeSS::kMotionVectorsLowRes);
     XeSS::SetMipBiasMode(XeSS::kMipBiasAutomatic);
 
     LoadIBLTextures();

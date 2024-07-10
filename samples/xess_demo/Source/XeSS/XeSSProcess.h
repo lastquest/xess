@@ -147,4 +147,6 @@ namespace XeSS
     float GetUpscaleFactor();
     void SetUpscaleFactor(float Upscale);
 
+    void SetDirectSRVariantIndex(uint32_t new_value);
+
 } // namespace XeSS

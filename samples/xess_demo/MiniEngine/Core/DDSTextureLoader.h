@@ -20,7 +20,12 @@
 
 #pragma once
 
+#ifdef USE_PREVIEW_AGILITY_SDK
+#include "Microsoft.Direct3D.D3D12.1.714.0-preview/build/native/include/d3d12.h"
+#include "Microsoft.Direct3D.D3D12.1.714.0-preview/build/native/include/directsr.h"
+#else
 #include <d3d12.h>
+#endif
 
 #pragma warning(push)
 #pragma warning(disable : 4005)

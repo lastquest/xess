@@ -58,7 +58,8 @@ namespace XeSS
 
     NumVar Sharpness("XeSS/Sharpness", 0.0f, 0.0f, 1.0f, 0.02f);
 
-    eMotionVectorsMode s_MotionVectorsMode = kMotionVectorsHighRes;
+    //eMotionVectorsMode s_MotionVectorsMode = kMotionVectorsHighRes;
+    eMotionVectorsMode s_MotionVectorsMode = kMotionVectorsLowRes;
     bool s_MotionVectorsJittered = false;
     bool s_MotionVectorsInNDC = false;
     eQualityLevel s_Quality = kQualityQuality;
@@ -329,6 +330,13 @@ void XeSS::SetUpscaleFactor(float Upscale)
     s_UpscaleFactor = Upscale;
     s_InputResolutionDirty = true;
 }
+
+void XeSS::SetDirectSRVariantIndex(uint32_t new_value)
+{
+    g_XeSSRuntime.SetDirectSRVariantIndex(new_value);
+    s_RuntimeDirty = true;
+}
+
 
 XeSS::eQualityLevel XeSS::GetQuality()
 {

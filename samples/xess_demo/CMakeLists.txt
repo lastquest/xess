@@ -90,7 +90,7 @@ set_source_files_properties(${ALL_SHADER_FILES} PROPERTIES SKIP_PRECOMPILE_HEADE
 set_source_files_properties(${SHADER_INCLUDE_FILES} PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
 
 target_compile_definitions(${TARGET_NAME} PRIVATE 
-    UNICODE _UNICODE __WRL_NO_DEFAULT_LIB__ _GAMING_DESKTOP
+    UNICODE _UNICODE __WRL_NO_DEFAULT_LIB__ _GAMING_DESKTOP USE_PREVIEW_AGILITY_SDK
     $<$<CONFIG:Debug>:_DEBUG> 
     $<$<CONFIG:Release>:RELEASE> 
     $<$<CONFIG:MinSizeRel>:RELEASE> 
@@ -98,6 +98,7 @@ target_compile_definitions(${TARGET_NAME} PRIVATE
 )
 
 target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/Source
+    ${CMAKE_CURRENT_SOURCE_DIR}/thirdparty
     ${CMAKE_CURRENT_SOURCE_DIR}/MiniEngine/Core
     ${CMAKE_CURRENT_SOURCE_DIR}/MiniEngine/Model
     ${CMAKE_CURRENT_SOURCE_DIR}/MiniEngine/Dependencies/WinPixEventRuntime/Include/WinPixEventRuntime

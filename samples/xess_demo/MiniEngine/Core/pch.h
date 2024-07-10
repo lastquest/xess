@@ -40,14 +40,25 @@
 #define NOHELP
 
 #define WIN32_LEAN_AND_MEAN
+// For constants like CLSID_D3D12DSRDeviceFactory to be initialized with a value,
+// to avoid linker error like "LNK2001: unresolved external symbol CLSID_D3D12DSRDeviceFactory".
+#define INITGUID
 
 #include <Windows.h>
 #include <wrl/client.h>
 #include <wrl/event.h>
 
+
+#ifdef USE_PREVIEW_AGILITY_SDK
+#include "Microsoft.Direct3D.D3D12.1.714.0-preview/build/native/include/d3d12.h"
+#include "Microsoft.Direct3D.D3D12.1.714.0-preview/build/native/include/directsr.h"
+#else
 #include <d3d12.h>
+#endif
+
 #include <dxgi1_6.h>
 #include "d3dx12.h"
+
 #ifdef _DEBUG
     #include <dxgidebug.h>
 #endif

@@ -103,6 +103,26 @@ namespace XeSS
         uint32_t console = 0;
         CommandLineArgs::GetInteger(L"console", console);
 
+        // Create an IDSRDevice to allow us to enumerate available SR variants.
+        ID3D12DSRDeviceFactory* dsrDeviceFactory;
+        D3D12GetInterface(CLSID_D3D12DSRDeviceFactory, IID_PPV_ARGS(&dsrDeviceFactory));
+        dsrDeviceFactory->CreateDSRDevice(g_Device, 1, IID_PPV_ARGS(&g_dsrDevice));
+
+        // Enumerate all super resolution variants available on the device.
+        m_DirectSVariantCount = g_dsrDevice->GetNumSuperResVariants();
+        DSR_SUPERRES_VARIANT_DESC variantDesc;
+        UINT textpos = 0;
+        for (UINT currentVariantIndex = 0; currentVariantIndex < m_DirectSVariantCount; currentVariantIndex++)
+        {
+            g_dsrDevice->GetSuperResVariantDesc(currentVariantIndex, &variantDesc);
+            // Use the variant desc as we see fit...
+            memcpy(m_DirectSRVariantNames + textpos, variantDesc.VariantName, strlen(variantDesc.VariantName));
+            textpos += strlen(variantDesc.VariantName);
+            m_DirectSRVariantNames[textpos++] = 0;
+            m_DirectSRVariantIDs[currentVariantIndex] = variantDesc.VariantId;
+        }
+
+
         // Get version of XeSS
         xess_version_t ver;
         xess_result_t ret = xessGetVersion(&ver);
@@ -224,6 +244,25 @@ namespace XeSS
 
         m_InitArguments = Args;
 
+        if (g_dsrDevice)
+        {
+            // Create a DirectSR engine for the desired variant.
+            DSR_SUPERRES_CREATE_ENGINE_PARAMETERS createParams;
+            createParams.VariantId = m_DirectSRVariantIDs[m_DirectSVariantIndex];
+            createParams.TargetFormat = DXGI_FORMAT_R11G11B10_FLOAT;
+            createParams.SourceColorFormat = DXGI_FORMAT_R11G11B10_FLOAT;
+            createParams.SourceDepthFormat = DXGI_FORMAT_R16_UNORM;
+            createParams.ExposureScaleFormat = DXGI_FORMAT_UNKNOWN;
+            createParams.Flags = DSR_SUPERRES_CREATE_ENGINE_FLAG_ALLOW_DRS;
+            createParams.TargetSize = DSR_SIZE{ Args.OutputWidth, Args.OutputHeight };
+            createParams.MaxSourceSize = DSR_SIZE{ Args.OutputWidth, Args.OutputHeight };
+
+            IDSRSuperResEngine* dsrEngine;
+            g_dsrDevice->CreateSuperResEngine(&createParams, IID_PPV_ARGS(&dsrEngine));
+
+            // Create super resolution upscaler object to use each frame.
+            dsrEngine->CreateUpscaler(g_CommandManager.GetCommandQueue(), IID_PPV_ARGS(&g_dsrUpscaler));
+        }
         xess_d3d12_init_params_t params {};
         params.outputResolution.x = Args.OutputWidth;
         params.outputResolution.y = Args.OutputHeight;
@@ -294,6 +333,53 @@ namespace XeSS
 
         float jitterX, jitterY;
         XeSSJitter::GetJitterValues(jitterX, jitterY);
+
+        if (g_dsrUpscaler)
+        {
+            DSR_SUPERRES_UPSCALER_EXECUTE_PARAMETERS params;
+            params.pTargetTexture = ExeArgs.OutputTexture->GetResource();
+            params.TargetRegion = D3D12_RECT{ 0, 0, (LONG)ExeArgs.OutputTexture->GetWidth(), (LONG)ExeArgs.OutputTexture->GetHeight() };
+            params.pSourceColorTexture = ExeArgs.ColorTexture->GetResource();
+            params.SourceColorRegion = D3D12_RECT{ 0, 0, (LONG)ExeArgs.ColorTexture->GetWidth(), (LONG)ExeArgs.ColorTexture->GetHeight() };
+            
+            if (m_InitArguments.UseHiResMotionVectors)
+            {
+                params.pSourceDepthTexture = nullptr;
+            }
+            else
+            {
+                params.pSourceDepthTexture = ExeArgs.DepthTexture->GetResource();
+                params.SourceDepthRegion = D3D12_RECT{ 0, 0, (LONG)ExeArgs.DepthTexture->GetWidth(), (LONG)ExeArgs.DepthTexture->GetHeight() };
+            }
+
+            params.pMotionVectorsTexture = ExeArgs.VelocityTexture->GetResource();
+            params.MotionVectorsRegion = D3D12_RECT{ 0, 0, (LONG)ExeArgs.VelocityTexture->GetWidth(), (LONG)ExeArgs.VelocityTexture->GetHeight() };
+            params.MotionVectorScale = DSR_FLOAT2{ 1.f, 1.f };
+            params.CameraJitter = DSR_FLOAT2{ jitterX, jitterY };
+            params.ExposureScale = 1.f;
+            params.PreExposure = 1.f;
+            params.Sharpness = 1.f;
+            params.CameraNear = 0.f;
+            params.CameraFar = INFINITY;
+            params.CameraFovAngleVert = 1.f;
+            params.pExposureScaleTexture = nullptr;
+            params.pIgnoreHistoryMaskTexture = nullptr;
+            params.IgnoreHistoryMaskRegion = D3D12_RECT{ 0, 0, (LONG)ExeArgs.ColorTexture->GetWidth(), (LONG)ExeArgs.ColorTexture->GetHeight() };
+            params.pReactiveMaskTexture = nullptr;
+            params.ReactiveMaskRegion = D3D12_RECT{ 0, 0,(LONG)ExeArgs.ColorTexture->GetWidth(), (LONG)ExeArgs.ColorTexture->GetHeight() };
+
+            DSR_SUPERRES_UPSCALER_EXECUTE_FLAGS executeFlags =
+                ExeArgs.ResetHistory ? DSR_SUPERRES_UPSCALER_EXECUTE_FLAG_RESET_HISTORY
+                : DSR_SUPERRES_UPSCALER_EXECUTE_FLAG_NONE;
+            
+            float frameDeltaInSeconds = 0.016f;
+            
+            HRESULT exe_hr = g_dsrUpscaler->Execute(&params, frameDeltaInSeconds, executeFlags);
+
+            ASSERT(exe_hr == S_OK);
+
+            return;
+        }
 
         xess_d3d12_execute_params_t params {};
         params.jitterOffsetX = jitterX;

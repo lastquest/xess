@@ -210,7 +210,7 @@ void DemoGui::OnGUI(DemoApp& App)
 
         if (ImGui::CollapsingHeader("Technique##Header", ImGuiTreeNodeFlags_DefaultOpen))
         {
-            static const char* TECHNIQUE_NAMES[] = { "XeSS", "TAA Without Upscaling", "TAA With Simple Upscaling" };
+            static const char* TECHNIQUE_NAMES[] = { "DirectSR", "TAA Without Upscaling", "TAA With Simple Upscaling" };
 
             int upscalingIndex = App.GetTechnique();
             if (ImGui::Combo("Technique", &upscalingIndex, TECHNIQUE_NAMES, IM_ARRAYSIZE(TECHNIQUE_NAMES)))
@@ -280,6 +280,13 @@ void DemoGui::OnGUI_XeSS()
         ImGui::Text("XeSS is not supported on this device.");
         ImGui::PopStyleColor();
         return;
+    }
+
+    
+    int directSRindex = XeSS::g_XeSSRuntime.GetDirectSRVariantIndex();
+    if (ImGui::Combo("DirectSR Variant", &directSRindex, XeSS::g_XeSSRuntime.GetDirectSRVariantNames(), XeSS::g_XeSSRuntime.GetDirectSRVariantCount()))
+    {
+        XeSS::SetDirectSRVariantIndex(directSRindex);
     }
 
     float sharpness = XeSS::Sharpness;
